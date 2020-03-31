@@ -117,6 +117,14 @@ func (u *Upgrader) Exec(ctx *cli.Context) error {
 			return errors.New("invalid package import")
 		}
 
+		// in this part, fetch the required details for a module from
+		// either git or Go module proxy
+		//   + repo@vX.Y.Z
+		//      - Check against Go Modules proxy with Go sum validation
+		//      - If GOPRIVATE specifies the repo in the list, then try doing
+		//        `git ls-remote --refs https://{repo}` and check the tags from there.
+		//   + repo@git-sha
+		//      - Check against `git ls-remote --refs https://{repo}`
 		u.Packages[splits[0]], err = parseVersion(splits[1])
 		if err != nil {
 			return err
@@ -157,13 +165,16 @@ func (u *Upgrader) Analyze(req *modfile.Require) error {
 		return nil
 	}
 	if inv.Major == rv.Major {
+		// If major modes are the same, then just update the package's version
+		// locally
+		req.Mod.Version = rv.String()
 		return nil
 	}
 	newImport := fmt.Sprintf("%s/v%d", pv, rv.Major)
 	fmt.Printf("Incrementing major version of %s from %s to %s\n", pkgpath, version, rv)
 	fmt.Printf("Changing import from %s to %s\n", pv, newImport)
 	u.file.DropRequire(pkgpath)
-	u.file.AddNewRequire(newImport, rv.String(), false)
+	u.file.AddNewRequire(newImport, rv.String(), req.Indirect)
 	content, err := u.file.Format()
 	if err != nil {
 		return err
