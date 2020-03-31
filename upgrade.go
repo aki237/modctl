@@ -131,16 +131,10 @@ func (u *Upgrader) Exec(ctx *cli.Context) error {
 		}
 	}
 
-	bs, err := ioutil.ReadFile("go.mod")
+	u.file, err = loadModFile()
 	if err != nil {
 		return err
 	}
-
-	x, err := modfile.Parse("go.mod", bs, u.fixer)
-	if err != nil {
-		return err
-	}
-	u.file = x
 
 	for _, req := range u.file.Require {
 		if err := u.Analyze(req); err != nil {

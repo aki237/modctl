@@ -3,12 +3,32 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/urfave/cli/v2"
 )
 
 func errf(format string, a ...interface{}) {
 	fmt.Fprintf(os.Stderr, format, a...)
+}
+
+func listModules(ctx *cli.Context) error {
+	mf, err := loadModFile()
+	if err != nil {
+		return nil
+	}
+
+	for _, req := range mf.Require {
+		v, err := parseVersion(req.Mod.Version)
+		if err != nil {
+			continue
+		}
+		fmt.Println(
+			strings.TrimSuffix(req.Mod.Path, fmt.Sprintf("/v%d", v.Major)),
+		)
+	}
+
+	return nil
 }
 
 func main() {
@@ -19,6 +39,11 @@ func main() {
 			{
 				Name:   "upgrade",
 				Action: (&Upgrader{}).Exec,
+			},
+			{
+				Name:   "list-modules",
+				Action: listModules,
+				Hidden: true,
 			},
 		},
 	}

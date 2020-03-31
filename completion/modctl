@@ -1,7 +1,7 @@
 #! /bin/bash
 
 __mods() {
-    go list -m -f '{{if not (or .Indirect .Main)}}{{.Path}}{{end}}' all | sed s,/v[0-9]*$,@,g
+    modctl list-modules | sed s/$/@/g
 }
 
 __modctl_complete() {
