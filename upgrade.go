@@ -41,10 +41,11 @@ func _package(path string, v *Version) *Package {
 }
 
 type Version struct {
-	Major  int
-	Minor  int
-	Patch  int
-	Suffix string
+	Major        int
+	Minor        int
+	Patch        int
+	Suffix       string
+	Incompatible bool
 }
 
 func (v *Version) String() string {
@@ -56,6 +57,10 @@ func (v *Version) String() string {
 }
 
 func parseVersion(x string) (*Version, error) {
+	isIncompatible := strings.HasSuffix(x, "+incompatible")
+	if isIncompatible {
+		x = strings.TrimSuffix(x, "+incompatible")
+	}
 	splits := strings.SplitN(x, ".", 3)
 	if len(splits) != 3 {
 		return nil, errors.New("Invalid version string: " + x)
