@@ -50,6 +50,9 @@ type Version struct {
 
 func (v *Version) String() string {
 	suffix := "-" + v.Suffix
+	if v.Incompatible {
+		suffix += "+incompatible"
+	}
 	if suffix == "-" {
 		suffix = ""
 	}
@@ -88,10 +91,11 @@ func parseVersion(x string) (*Version, error) {
 	}
 
 	return &Version{
-		Major:  major,
-		Minor:  minor,
-		Patch:  patch,
-		Suffix: suffix,
+		Major:        major,
+		Minor:        minor,
+		Patch:        patch,
+		Suffix:       suffix,
+		Incompatible: isIncompatible,
 	}, nil
 }
 
