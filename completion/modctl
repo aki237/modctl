@@ -1,10 +1,11 @@
 #! /bin/bash
 
 __mods() {
-    go list -m -f '{{if not (or .Indirect .Main)}}{{.Path}}{{end}}' all
+    go list -m -f '{{if not (or .Indirect .Main)}}{{.Path}}{{end}}' all | sed s,/v[0-9]*$,@,g
 }
 
 __modctl_complete() {
+    compopt +o nospace
     local cur opts base
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
@@ -24,6 +25,7 @@ __modctl_complete() {
         *)
             case "$prev" in
                 "upgrade")
+                    compopt -o nospace
                     opts="$(__mods $cur)" #git repos
         esac;;
     esac
