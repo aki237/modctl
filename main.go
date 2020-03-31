@@ -13,6 +13,7 @@ func errf(format string, a ...interface{}) {
 }
 
 func listModules(ctx *cli.Context) error {
+	allowIndirect := ctx.Bool("allow-indirect")
 	mf, err := loadModFile()
 	if err != nil {
 		return nil
@@ -21,6 +22,9 @@ func listModules(ctx *cli.Context) error {
 	for _, req := range mf.Require {
 		v, err := parseVersion(req.Mod.Version)
 		if err != nil {
+			continue
+		}
+		if req.Indirect && !allowIndirect {
 			continue
 		}
 		fmt.Println(
@@ -44,6 +48,12 @@ func main() {
 				Name:   "list-modules",
 				Action: listModules,
 				Hidden: true,
+				Flags: []cli.Flag{
+					&cli.BoolFlag{
+						Name:    "allow-indirect",
+						Aliases: []string{"a"},
+					},
+				},
 			},
 		},
 	}
