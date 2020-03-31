@@ -151,6 +151,13 @@ func (u *Upgrader) Exec(ctx *cli.Context) error {
 	if goVersion != "" {
 		u.file.AddGoStmt(goVersion)
 	}
+	u.file.SortBlocks()
+	content, err := u.file.Format()
+	if err != nil {
+		return err
+	}
+	// write content to go.mod.
+	return ioutil.WriteFile("go.mod", content, 0644)
 }
 
 func (u *Upgrader) Analyze(req *modfile.Require) error {
@@ -160,7 +167,7 @@ func (u *Upgrader) Analyze(req *modfile.Require) error {
 	if err != nil {
 		return err
 	}
-	pv := strings.TrimSuffix(pkgpath, fmt.Sprintf("v%d", inv.Major))
+	pv := strings.TrimSuffix(pkgpath, fmt.Sprintf("/v%d", inv.Major))
 
 	rv, ok := u.Packages[pv]
 	if !ok {
@@ -169,7 +176,13 @@ func (u *Upgrader) Analyze(req *modfile.Require) error {
 	if inv.Major == rv.Major {
 		// If major modes are the same, then just update the package's version
 		// locally
-		req.Mod.Version = rv.String()
+		if inv.String() == rv.String() {
+			fmt.Printf("Package %s already in the said vesion: %s\n", pkgpath, inv)
+			return nil
+		}
+		fmt.Printf("Upgrading incremental version of %s from %s to %s\n", pkgpath, inv, rv)
+		u.file.DropRequire(pkgpath)
+		u.file.AddNewRequire(pkgpath, rv.String(), req.Indirect)
 		return nil
 	}
 	newImport := fmt.Sprintf("%s/v%d", pv, rv.Major)
@@ -177,10 +190,6 @@ func (u *Upgrader) Analyze(req *modfile.Require) error {
 	fmt.Printf("Changing import from %s to %s\n", pv, newImport)
 	u.file.DropRequire(pkgpath)
 	u.file.AddNewRequire(newImport, rv.String(), req.Indirect)
-	content, err := u.file.Format()
-	if err != nil {
-		return err
-	}
 	gofiles := make([]string, 0)
 
 	// Fixup package imports.
@@ -201,9 +210,7 @@ func (u *Upgrader) Analyze(req *modfile.Require) error {
 			return err
 		}
 	}
-
-	// write content to go.mod.
-	return ioutil.WriteFile("go.mod", content, 0644)
+	return nil
 }
 
 func e(cmd string) {
