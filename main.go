@@ -23,6 +23,7 @@ func main() {
 		},
 	}
 	app.Name = "modctl"
+	app.EnableBashCompletion = true
 	app.Version = "v0.0.0"
 	err := app.Run(os.Args)
 	if err != nil {
