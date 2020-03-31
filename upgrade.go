@@ -110,11 +110,18 @@ func (u *Upgrader) Exec(ctx *cli.Context) error {
 		return errors.New("required package with a revision")
 	}
 
+	goVersion := ""
+
 	var err error
 	for _, pkg := range args {
 		splits := strings.Split(pkg, "@")
 		if len(splits) != 2 {
 			return errors.New("invalid package import")
+		}
+
+		if splits[0] == "go" {
+			goVersion = splits[1]
+			continue
 		}
 
 		// in this part, fetch the required details for a module from
@@ -141,8 +148,9 @@ func (u *Upgrader) Exec(ctx *cli.Context) error {
 			return err
 		}
 	}
-
-	return nil
+	if goVersion != "" {
+		u.file.AddGoStmt(goVersion)
+	}
 }
 
 func (u *Upgrader) Analyze(req *modfile.Require) error {

@@ -1,7 +1,7 @@
 #! /bin/bash
 
 __mods() {
-    modctl list-modules | sed s/$/@/g
+    modctl list-modules | grep "$1" | sed s/$/@/g
 }
 
 __modctl_complete() {
@@ -18,7 +18,7 @@ __modctl_complete() {
         "")
             case "$prev" in
                 "upgrade")
-                    opts="$(__mods '') --help";;
+                    opts="go@ $(__mods '') --help";;
                 "modctl")
                     opts="--help upgrade";;
         esac;;
@@ -26,7 +26,7 @@ __modctl_complete() {
             case "$prev" in
                 "upgrade")
                     compopt -o nospace
-                    opts="$(__mods $cur)" #git repos
+                    opts="go@ $(__mods $cur)" #git repos
         esac;;
     esac
     COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
